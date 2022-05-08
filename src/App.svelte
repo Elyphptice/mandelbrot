@@ -65,9 +65,9 @@
 				this.zoom = 0;
 				this.x = 0;
 				this.y = 0;
-				this.r_mod = 1;
-				this.g_mod = 2;
-				this.b_mod = 3;
+				inputData.r_mod = Math.random() * 3;
+				inputData.b_mod = Math.random() * 3;
+				inputData.g_mod = Math.random() * 3;
 			}
 		}
 		
@@ -146,12 +146,6 @@
 			}
 			if(pressedKeys.includes("r")) {
 				inputData = new InputData();
-			}
-			// randomize colors 
-			if(pressedKeys.includes("c")) {
-				inputData.r_mod = Math.random();
-				inputData.b_mod = Math.random();
-				inputData.g_mod = Math.random();
 			}
 			
 			const commandEncoder = device.createCommandEncoder();
