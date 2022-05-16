@@ -43,7 +43,7 @@ fn vs_main(
 
 fn square_complex(c: vec2<f32>) -> vec2<f32> {
     let x = c.x * c.x - c.y * c.y;
-    let y = 2.0 * c.x * c.y;
+    let y = input_data.r_mod * c.x * c.y;
     return vec2<f32>(x, y);
 }
 
@@ -55,13 +55,14 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let c = in.position;
 
     for(var i = 0; i < iterations; i = i + 1) {
-        z = square_complex(z) + c;
-        if(length(z) > 4.0) {
+        z = square_complex(z) + c * input_data.r_mod;
+        if(z.x * z.x + z.y * z.y > 4.0) {
             let f = f32(i) / 10.0;
             return vec4<f32>(f % input_data.r_mod, f % input_data.g_mod, f % input_data.b_mod, 1.0);
         }
+        
     }
 
-    return vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    return vec4<f32>(0.0, 0.0, 0.0, 1.0);
 }
  

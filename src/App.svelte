@@ -65,9 +65,9 @@
 				this.zoom = 0;
 				this.x = 0;
 				this.y = 0;
-				inputData.r_mod = Math.random() * 3;
-				inputData.b_mod = Math.random() * 3;
-				inputData.g_mod = Math.random() * 3;
+				this.r_mod = Math.random() * 3;
+				this.b_mod = Math.random() * 3;
+				this.g_mod = Math.random() * 3;
 			}
 		}
 		
