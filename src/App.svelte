@@ -65,7 +65,7 @@
 			constructor() {
 				this.x = 0;
 				this.y = 0;
-				this.z = 0;
+				this.z = 2;
 
 				const camera = new Camera();
 				camera.aspectRatio = canvas.width / canvas.height;
@@ -101,7 +101,7 @@
 			return result;
 		}
 		
-		const inputBufferSize = 64 * 2 + 16;
+		const inputBufferSize = 208;
 		const inputBuffer = device.createBuffer({
 			size: inputBufferSize,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -175,7 +175,7 @@
 
 			
 
-			const speed = .1;
+			const speed = .01;
 
 			let input = vec3.create();
 			
@@ -191,10 +191,10 @@
 			if(pressedKeys["a"]) {
 				input[0] += speed;
 			}
-			if(pressedKeys["q"]) {
+			if(pressedKeys["e"]) {
 				input[1] -= speed;
 			}
-			if(pressedKeys["e"]) {
+			if(pressedKeys["q"]) {
 				input[1] += speed;
 			}
 			if(pressedKeys["r"]) {
@@ -214,30 +214,39 @@
 			);
 
 			var view = mat4.create();
-			mat4.rotate(view, view, -inputData.mouse[1] / 1000, [1, 0, 0]);
-			mat4.rotate(view, view, -inputData.mouse[0] / 1000, [0, 1, 0]);
+			mat4.rotate(view, view, inputData.mouse[0] / 1000, [0, 1, 0]);
+			mat4.rotate(view, view, inputData.mouse[1] / 300, [1, 0, 0]);
 
 			let inverseView = mat4.create();
 			mat4.invert(inverseView, view);
+
+			let y = input[1];
+			input[1] = 0;
 			
-			vec3.transformMat4(input, input, inverseView);
+			vec3.transformMat4(input, input, view);
 			
 			inputData.x += input[0];
-			inputData.y += input[1];
+			inputData.y += y;
 			inputData.z += input[2];
 			
-			mat4.translate(view, view, [inputData.x, inputData.y, inputData.z]);
+			// mat4.translate(view, view, [inputData.x, inputData.y, inputData.z]);
 
+			let inverseProjection = mat4.create();
+			mat4.invert(inverseProjection, projection);
+			
 			mat4.multiply(projection, projection, view);
 			
 			
-			device.queue.writeBuffer(inputBuffer, 0, new Float32Array(projection));
+			device.queue.writeBuffer(inputBuffer, 0, new Float32Array(view));
 
 			var currentTime = performance.now();
 			currentTime = (currentTime - startTime) / 1000;
 			
-			device.queue.writeBuffer(inputBuffer, 64, new Float32Array([currentTime]));
-			device.queue.writeBuffer(inputBuffer, 64 + 4, new Float32Array(inverseView));
+			device.queue.writeBuffer(inputBuffer, 64, new Float32Array(inverseProjection));
+			device.queue.writeBuffer(inputBuffer, 128, new Float32Array(inverseView));
+			device.queue.writeBuffer(inputBuffer, 192, new Float32Array([inputData.x, inputData.y, inputData.z]));
+			device.queue.writeBuffer(inputBuffer, 204, new Float32Array([currentTime]));
+
 
 			const textureView = context.getCurrentTexture().createView();
 
