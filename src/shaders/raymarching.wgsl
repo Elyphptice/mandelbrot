@@ -82,15 +82,15 @@ fn signed_distance_to_mandelbulb(point: vec3<f32>, iterations: u32, power: f32) 
 }
 
 fn map(point: vec3<f32>) -> f32 {
-    let otherPoint = point + vec3<f32>(5.0 * cos(input_data.time / 8.0), 0.0, 0.0);
-    return smooth_min(
-        signed_distance_to_mandelbulb(point, 8u, 8.0),
-        signed_distance_to_mandelbulb(otherPoint, 8u, 8.0),
-        // signed_distance_to_cube(otherPoint, 0.1),
-        1.0
-    );
+    let otherPoint = point + vec3<f32>(.5 * sin(input_data.time), 0.0, 0.0);
+    let d1 = signed_distance_to_sphere(point, 0.2);
+    let d2 = signed_distance_to_cube(otherPoint, 0.1);
 
-    return signed_distance_to_mandelbulb(point, 8u, 8.0);
+    return smooth_min(
+        d1,
+        d2,
+        .2
+    );
 }
 
 fn colored_map(point: vec3<f32>) -> vec2<f32> {
@@ -132,23 +132,22 @@ fn raymarch(position: vec3<f32>, ray: vec3<f32>) -> vec4<f32> {
     var t = 0.0;
     for (var i = 0u; i < max_steps; i = i + 1u) {
         let p = position + ray * t;
-        let d = map(p);
+        // let d = map(p);
         
-        // let m = colored_map(p);
-        // let d = m.x;
-        // let c = m.y;
+        let m = colored_map(p);
+        let d = m.x;
+        let c = m.y;
 
         if(d < threshold) {
             let lightDir = normalize(vec3<f32>(0.0, 1.0, -1.0));
             
-            // var color = vec3<f32>(
-            //     1.0 - c, 0.0, c
-            // );
+            var color = vec3<f32>(
+                1.0 - c, 0.0, c
+            );
             
             let l = dot(normal(p), lightDir);
             // ret = vec4<f32>(vec3<f32>(c) - .2, 1.0);
-            // ret = vec4<f32>(l * color, 1.0);
-            ret = vec4<f32>(l, l, l, 1.0);
+            ret = vec4<f32>(l * color, 1.0);
             break;
         }
 
