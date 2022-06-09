@@ -93,16 +93,25 @@ import Slider from "./Slider.svelte";
 	let inputData: InputData;
 	let canvas: HTMLCanvasElement;
 	
+	let webgpuCapable = false;
+	
 	async function init() {
 		function exit() {
 			console.error("No GPU adapter found! Try enabling the experimental flag \"#enable-unsafe-webgpu\" under \"chrome://flags\"");
+		}
+
+
+		if (navigator.gpu == undefined) {
+			exit();
 			return;
 		}
 
-		if (!navigator.gpu) exit();
 		const adapter = await navigator.gpu.requestAdapter();
 		if(!adapter)
 			exit();
+
+		webgpuCapable = true;
+
   		const device = await adapter.requestDevice();
 		const context = canvas.getContext('webgpu');
 
@@ -404,10 +413,10 @@ import Slider from "./Slider.svelte";
 			postPassEncoder.end();
 
 			device.queue.submit([commandEncoder.finish()]);
-			// requestAnimationFrame(frame);
+			requestAnimationFrame(frame);
 		}
 
-		requestAnimationFrame(frame);
+		// requestAnimationFrame(frame);
 	}
 
 	function getFrustumCorners(camera: Camera): mat4{
@@ -457,60 +466,67 @@ import Slider from "./Slider.svelte";
 	});
 </script>
 
-<div>
-	<span>
-		<Slider startValue={50} on:slide={(v) => inputData.iterations = v.detail.value * 20}></Slider>
-		<h6>iteration_count</h6>
-	</span>
-	<span>
-		<Slider startValue={16} on:slide={(v) => inputData.power = v.detail.value * 50}></Slider>
-		<h6>fractal_power</h6>
-	</span>
-	<span>
-		<Slider startValue={0} on:slide={(v) => inputData.color = v.detail.value}></Slider>
-		<h6>color</h6>
-		<h6 on:click="{() => inputData.colors = randomColors()}" class="bg-inverse">[randomize]</h6>
-	</span>
-	<span>
-		<Slider startValue={15} on:slide={(v) => inputData.noise = v.detail.value}></Slider>
-		<h6>noise</h6>
-	</span>
-</div>
-<div class="right">
-	<span>
-		<Slider startValue={25} on:slide={(v) => inputData.chromaticAberration = v.detail.value}></Slider>
-		<h6>chromatic_abberation</h6>
-	</span>
-	<span>
-		<Slider startValue={0} on:slide={(v) => inputData.normals = v.detail.value}></Slider>
-		<h6>normal_strenght</h6>
-	</span>
-	<span>
-		<Slider startValue={0} on:slide={(v) => inputData.randomness = v.detail.value / 10}></Slider>
-		<h6>randomness</h6>
-		<h6 on:click="{() => inputData.seed = Math.random() * 100.0}" class="bg-inverse">[reseed]</h6>
-	</span>
-	<span>
-		<Slider startValue={0} on:slide={(v) => inputData.wobble = v.detail.value / 20}></Slider>
-		<h6>wobble_speed</h6>
-	</span>
-</div>
-<div style="width: 100vw; display: flex; justify-content: center;">
-	<h6 style="margin-top: 12px;">webgpu_mandelbulb_explorer</h6>
-</div>
-<h6 style="position: absolute; bottom: 0">
-	|<br>
-	|<br>
-	+--
-</h6>
-<h6 style="position: absolute; bottom: 0; right: 0; text-align: right;">
-	|<br>
-	|<br>
-	--+
-</h6>
-<h6 style="position: absolute; bottom: 0; width: 100vw; text-align: center; margin: 0; transform: translateY(-10px)">
-	- x -
-</h6>
+{#if webgpuCapable}
+	<div>
+		<span>
+			<Slider startValue={50} on:slide={(v) => inputData.iterations = v.detail.value * 20}></Slider>
+			<h6>iteration_count</h6>
+		</span>
+		<span>
+			<Slider startValue={16} on:slide={(v) => inputData.power = v.detail.value * 50}></Slider>
+			<h6>fractal_power</h6>
+		</span>
+		<span>
+			<Slider startValue={0} on:slide={(v) => inputData.color = v.detail.value}></Slider>
+			<h6>color</h6>
+			<h6 on:click="{() => inputData.colors = randomColors()}" class="bg-inverse">[randomize]</h6>
+		</span>
+		<span>
+			<Slider startValue={15} on:slide={(v) => inputData.noise = v.detail.value}></Slider>
+			<h6>noise</h6>
+		</span>
+	</div>
+	<div class="right">
+		<span>
+			<Slider startValue={25} on:slide={(v) => inputData.chromaticAberration = v.detail.value}></Slider>
+			<h6>chromatic_abberation</h6>
+		</span>
+		<span>
+			<Slider startValue={0} on:slide={(v) => inputData.normals = v.detail.value}></Slider>
+			<h6>normal_strenght</h6>
+		</span>
+		<span>
+			<Slider startValue={0} on:slide={(v) => inputData.randomness = v.detail.value / 10}></Slider>
+			<h6>randomness</h6>
+			<h6 on:click="{() => inputData.seed = Math.random() * 100.0}" class="bg-inverse">[reseed]</h6>
+		</span>
+		<span>
+			<Slider startValue={0} on:slide={(v) => inputData.wobble = v.detail.value / 20}></Slider>
+			<h6>wobble_speed</h6>
+		</span>
+	</div>
+	<div style="width: 100vw; display: flex; justify-content: center;">
+		<h6 style="margin-top: 12px;">webgpu_mandelbulb_explorer</h6>
+	</div>
+	<h6 style="position: absolute; bottom: 0">
+		|<br>
+		|<br>
+		+--
+	</h6>
+	<h6 style="position: absolute; bottom: 0; right: 0; text-align: right;">
+		|<br>
+		|<br>
+		--+
+	</h6>
+	<h6 style="position: absolute; bottom: 0; width: 100vw; text-align: center; margin: 0; transform: translateY(-10px)">
+		- x -
+	</h6>
+	
+{:else}
+	<h6 style="color: black; justify-content: center; align-items: center; display: flex; height: 100vh">
+		No GPU adapter found! Try updating chrome and enabling the experimental flag "#enable-unsafe-webgpu" under "chrome://flags.
+	</h6>
+{/if}
 <canvas bind:this="{canvas}">
 </canvas>
 <link rel="preconnect" href="https://fonts.googleapis.com">
