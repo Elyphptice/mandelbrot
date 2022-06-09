@@ -13,10 +13,23 @@ struct InputData {
     inverse_view: mat4x4<f32>;
     camera_position: vec3<f32>;
     time: f32;
+    color: f32;
+    noise: f32;
+    chromatic_aberration: f32;
+    iterations: f32;
+    power: f32;
+    normals: f32;
+    randomness: f32;
+    wobble_speed: f32;
+    seed: f32;
+    color1: vec4<f32>;
+    color2: vec4<f32>;
+    color3: vec4<f32>;
 };
 
 @group(0) @binding(0)
 var<uniform> input_data: InputData;
+
 
 fn signed_distance_to_sphere(point: vec3<f32>, radius: f32) -> f32 {
     return length(point) - radius;
@@ -57,6 +70,36 @@ fn from_polar_sphere(sphere: PolarSphere) -> vec3<f32> {
     );
 }
 
+fn signed_distance_to_sierpinsky(point: vec3<f32>, iterations: u32, scale: f32) -> f32
+{
+    var z = point;
+    
+	let a1 = vec3<f32>(1.0,1.0,1.0);
+	let a2 = vec3<f32>(-1.0,-1.0,1.0);
+	let a3 = vec3<f32>(1.0,-1.0,-1.0);
+	let a4 = vec3<f32>(-1.0,1.0,-1.0);
+	var c = vec3<f32>(0.0,0.0,0.0);
+	let n = 0;
+	var dist = 0.0;
+    var d = 0.0;
+    for (var i = 0u; i < iterations; i = i + 1u) {
+        c = a1;
+        dist = length(z-a1);
+        d = length(z-a2); if (d < dist) { c = a2; dist=d; }
+        d = length(z-a3); if (d < dist) { c = a3; dist=d; }
+        d = length(z-a4); if (d < dist) { c = a4; dist=d; }
+		z = scale*z-c*(scale - 1.0);
+    }
+
+	return length(z) * pow(scale, f32(-n));
+}
+
+fn signed_distance_to_ocahedron(point: vec3<f32>, size: f32) -> f32
+{
+    let p = abs(point);
+    return (p.x+p.y+p.z-size)*0.57735027;
+}
+
 fn signed_distance_to_mandelbulb(point: vec3<f32>, iterations: u32, power: f32) -> f32 {
 	var z = point;
 	var q = 0.0;
@@ -81,16 +124,88 @@ fn signed_distance_to_mandelbulb(point: vec3<f32>, iterations: u32, power: f32) 
 	return 0.5*log(q)*q/dr;
 }
 
-fn map(point: vec3<f32>) -> f32 {
-    let otherPoint = point + vec3<f32>(.5 * sin(input_data.time), 0.0, 0.0);
-    let d1 = signed_distance_to_sphere(point, 0.2);
-    let d2 = signed_distance_to_cube(otherPoint, 0.1);
+fn rand(co: vec2<f32>) -> f32{
+  return fract(sin(dot(co.xy ,vec2<f32>(12.9898,78.233))) * 43758.5453);
+}
 
-    return smooth_min(
-        d1,
-        d2,
-        .2
-    );
+fn rand_3d(coord: vec3<f32>) -> f32{
+    var c = abs(coord);
+    c = c % (10000.0 * vec3<f32>(1.0));
+	return fract(sin(dot(coord, vec3<f32>(12.9898, 78.233, 71.325))) * 43758.5453);
+}
+
+fn perlin_noise(coord: vec3<f32>) -> f32{
+    var c = coord;
+	c = c * 20.0;
+	c = c % (10000.0 * vec3<f32>(1.0));
+	
+	var i: vec3<f32> = floor(c);
+	var f: vec3<f32> = fract(c);
+
+    var cube = array<array<array<f32, 2>, 2>, 2>();
+	cube[0][0][0] = rand_3d(i) * 6.28318;
+	cube[1][0][0] = rand_3d(i + vec3<f32>(1.0, 0.0, 0.0)) * 6.28318;
+	cube[0][1][0] = rand_3d(i + vec3<f32>(0.0, 1.0, 0.0)) * 6.28318;
+	cube[0][0][1] = rand_3d(i + vec3<f32>(0.0, 0.0, 1.0)) * 6.28318;
+	cube[1][1][0] = rand_3d(i + vec3<f32>(1.0, 1.0, 0.0)) * 6.28318;
+	cube[0][1][1] = rand_3d(i + vec3<f32>(0.0, 1.0, 1.0)) * 6.28318;
+	cube[1][0][1] = rand_3d(i + vec3<f32>(1.0, 0.0, 1.0)) * 6.28318;
+	cube[1][1][1] = rand_3d(i + vec3<f32>(1.0, 1.0, 1.0)) * 6.28318;
+
+    var vectors = array<array<array<vec3<f32>, 2>, 2>, 2>();
+	vectors[0][0][0] = vec3(-sin(cube[0][0][0]), cos(cube[0][0][0]), -cos(cube[0][0][0]));
+	vectors[1][0][0] = vec3(-sin(cube[1][0][0]), cos(cube[1][0][0]), -cos(cube[1][0][0]));
+	vectors[0][1][0] = vec3(-sin(cube[0][1][0]), cos(cube[0][1][0]), -cos(cube[0][1][0]));
+	vectors[0][0][1] = vec3(-sin(cube[0][0][1]), cos(cube[0][0][1]), -cos(cube[0][0][1]));
+	vectors[1][1][0] = vec3(-sin(cube[1][1][0]), cos(cube[1][1][0]), -cos(cube[1][1][0]));
+	vectors[0][1][1] = vec3(-sin(cube[0][1][1]), cos(cube[0][1][1]), -cos(cube[0][1][1]));
+	vectors[1][0][1] = vec3(-sin(cube[1][0][1]), cos(cube[1][0][1]), -cos(cube[1][0][1]));
+	vectors[1][1][1] = vec3(-sin(cube[1][1][1]), cos(cube[1][1][1]), -cos(cube[1][1][1]));
+	
+    var dots = array<array<array<f32, 2>, 2>, 2>();
+	dots[0][0][0] = dot(vectors[0][0][0], f);
+	dots[1][0][0] = dot(vectors[1][0][0], f - vec3<f32>(1.0, 0.0, 0.0));
+	dots[0][1][0] = dot(vectors[0][1][0], f - vec3<f32>(0.0, 1.0, 0.0));
+	dots[0][0][1] = dot(vectors[0][0][1], f - vec3<f32>(0.0, 0.0, 1.0));
+	dots[1][1][0] = dot(vectors[1][1][0], f - vec3<f32>(1.0, 1.0, 0.0));
+	dots[0][1][1] = dot(vectors[0][1][1], f - vec3<f32>(0.0, 1.0, 1.0));
+	dots[1][0][1] = dot(vectors[1][0][1], f - vec3<f32>(1.0, 0.0, 1.0));
+	dots[1][1][1] = dot(vectors[1][1][1], f - vec3<f32>(1.0, 1.0, 1.0));
+
+	var cubic: vec3<f32> = f * f * (3.0 - 2.0 * f);
+
+	return mix(
+		mix(
+			mix(dots[0][0][0], dots[1][0][0], cubic.x),
+			mix(dots[0][1][0], dots[1][1][0], cubic.x),
+			cubic.y
+		),
+		mix(
+			mix(dots[0][0][1], dots[1][0][1], cubic.x),
+			mix(dots[0][1][1], dots[1][1][1], cubic.x),
+			cubic.y
+		),
+		cubic.z
+	) + 0.5;
+}
+
+// fn noise
+
+fn map(point: vec3<f32>) -> f32 {
+    var repeat = cos(point);
+    if(input_data.randomness != 0.0){
+        let r = perlin_noise(point * input_data.randomness + input_data.seed + input_data.time * input_data.wobble_speed) * 2.0 - 1.0;
+        repeat = repeat + r;
+    }
+    let d3 = signed_distance_to_mandelbulb(repeat, u32(input_data.iterations), input_data.power);
+
+    return d3;
+
+    // return smooth_min(
+    //     d1,
+    //     d2,
+    //     .2
+    // );
 }
 
 fn colored_map(point: vec3<f32>) -> vec2<f32> {
@@ -126,28 +241,60 @@ fn normal(point: vec3<f32>) -> vec3<f32> {
 fn raymarch(position: vec3<f32>, ray: vec3<f32>) -> vec4<f32> {
     var ret = vec4<f32>(1.0, 1.0, 1.0, 1.0);
 
-    let max_steps: u32 = 128u;
+    let max_steps: u32 = 1024u;
     let threshold: f32 = 0.001;
 
     var t = 0.0;
+
+    var traveled = 0.0;
+
+    var glow_color = vec4<f32>(0.0, 0.0, 1.0, 1.0);
+    
     for (var i = 0u; i < max_steps; i = i + 1u) {
         let p = position + ray * t;
-        // let d = map(p);
-        
-        let m = colored_map(p);
-        let d = m.x;
-        let c = m.y;
+
+        let d = map(p);
+        traveled = traveled + d;
+
+        if (d > 1000.0) {
+            break;
+        }
+
+        // ret.z = ret.z - .003;
 
         if(d < threshold) {
             let lightDir = normalize(vec3<f32>(0.0, 1.0, -1.0));
-            
-            var color = vec3<f32>(
-                1.0 - c, 0.0, c
+
+            let color1 = vec3<f32>(217.0, 3.0, 104.0) / 255.0;
+            let color2 = vec3<f32>(241.0, 196.0, 15.0) / 255.0;
+            let color3 = vec3<f32>(34.0, 116.0, 165.0) / 255.0;
+
+            let color_difference = 10.0;
+
+            var steps = f32(i) / f32(max_steps);
+            steps = steps * 5.0 - 0.8;
+
+            let mix1 = mix(
+                input_data.color1.rgb, input_data.color2.rgb, 
+                sin(steps * color_difference)
+            );
+
+            let mix2 = mix(
+                mix1, input_data.color3.rgb, 
+                sin(steps * color_difference + color_difference / 2.0)
+            );
+
+            let color = mix(
+                vec3<f32>(1.0) * f32(i) / f32(max_steps) + .2, mix2 + abs(steps),
+                input_data.color
             );
             
-            let l = dot(normal(p), lightDir);
-            // ret = vec4<f32>(vec3<f32>(c) - .2, 1.0);
-            ret = vec4<f32>(l * color, 1.0);
+            
+            var l = 0.0;
+            if(input_data.normals != 0.0) {
+                l = dot(normal(p), lightDir);
+            }
+            ret = vec4<f32>(vec3<f32>(1.0) * color * mix(1.0, l, input_data.normals), 1.0);
             break;
         }
 
@@ -156,10 +303,6 @@ fn raymarch(position: vec3<f32>, ray: vec3<f32>) -> vec4<f32> {
 
     return ret;
 }
-
-// fn signed_distance_to_cube(point: vec3<f32>, extent: f32) -> f32 {
-    
-// }
 
 @stage(vertex)
 fn vs_main(
