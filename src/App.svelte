@@ -416,7 +416,7 @@ import Slider from "./Slider.svelte";
 			requestAnimationFrame(frame);
 		}
 
-		// requestAnimationFrame(frame);
+		requestAnimationFrame(frame);
 	}
 
 	function getFrustumCorners(camera: Camera): mat4{
