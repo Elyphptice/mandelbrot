@@ -4,6 +4,7 @@
 	import postShader from "./shaders/post.wgsl";
 	import { mat3, mat4, vec2, vec3, vec4 } from "gl-matrix";
 import Slider from "./Slider.svelte";
+    import { text } from "svelte/internal";
 
 		class Camera {
 			public fieldOfView: number;
@@ -111,6 +112,8 @@ import Slider from "./Slider.svelte";
 			exit();
 
 		webgpuCapable = true;
+		document.getElementById("about-text").style.color = "white";
+		document.querySelectorAll("h6").forEach((e) => e.classList.remove("black"));
 
   		const device = await adapter.requestDevice();
 		const context = canvas.getContext('webgpu');
@@ -457,12 +460,184 @@ import Slider from "./Slider.svelte";
 		vec3.negate(vec, vec);
 		return vec;
 	}
-
-	
 	
 	onMount(() => {
 		init();
 		inputData = new InputData();
+
+		let aboutElement = document.getElementById('about-text');
+
+		let aboutText = `
+		> New session started at ${new Date().toLocaleString()}
+		> Press enter or click to continue#
+		>#
+		let me = new Konrad();#
+		echo me.name;
+		> Konrad Hapke#
+		clear# %
+		echo me.age;
+		> 19
+		echo me.location;
+		> Vienna, Austria
+		clear# %
+		echo me.ask("What's up with the mandelbulb?");#
+		> I'm glad you asked!
+		> It's here, because it is just as intricate as I am.#
+		> #
+		> #
+		> Sorry :/#
+		clear# %
+		echo me.hobbies;
+		> Bouldering#
+		> Music#
+		> 3D-Art#
+		> Programming, hehe#
+		clear# %
+		echo me.things_i_love;
+		> The Programming Language Rust#
+		> Everything Open Source#
+		> Nature#
+		> My family#
+		> Everyone Codes#
+		clear# %
+		echo me.things_i_hate;
+		> People who don't use Linux (kidding)
+		> People who don't use Rust (also kidding)
+		> Closed Source Software
+		> Graphical User Interfaces (not kidding)
+		clear# %
+		echo me.ask("Why do you love Everything Codes?");
+		> They offer the best zivi job, objectively.#
+		> It's about programming.#
+		> You offered a CS50 course, and that's how I got into coding.#
+		> My friend Sami will also work there this summer.#
+		clear# %
+		echo me.ask("How would you be helpful to Everything Codes?");
+		> I love explaining code, so maybe I could help in the programs.#
+		> I could create some 3D-Art... if that would be helpful :)#
+		> I could help with the website.#
+		> And pretty much anything else you need.#
+		clear# %
+		echo me.ask("What did you do before Everything Codes?");
+		> I was a student at the HTL Spengergasse.#
+		> There I made about 5 feature-complete games in Unity.#
+		> Made a daily Blender-Render for 168 days.#
+		> I had an internship at Loytec, where I learned connecting Unix machines via TCP to automate buildings.#
+		> SEO for some sites.#
+		> An online Game for the Museum of Applied Arts.#
+		clear# %
+		> echo me.skills;
+		> Unity and CSharp#
+		> Rust#
+		> Everything web#
+		> Blender#
+		> Collaborating, since a lot of my projects were group projects#
+		> clear# %
+		echo "Alight, enough about Konrad."#
+		ps -e | grep konrad#
+		> PID  TTY      TIME     CMD
+		> 3213 ttys031  00:02:03 konrad.rs
+		kill 3213#
+		> Konrad has been terminated.#
+		clear# %
+		$
+		`;
+
+
+		let time = 5;
+		let i = 0;
+		let active = true;
+		const typingSound = new Audio('typing.mp3');
+		typingSound.loop = true;
+
+		function append() {
+			typingSound.play();
+			let letter = aboutText[i];
+			if (letter === '#') {
+				active = false;
+				typingSound.pause();
+				i++;
+				aboutElement.innerHTML += '<br>';
+				return;
+			}
+			if (letter === '%') {
+				aboutElement.innerHTML = '';
+				i++;
+				letter = ''
+			}
+			if(letter === '>') {
+				time = 5;
+			}
+			if(letter === '\n') {
+				time = 50;
+				letter = '<br>';
+			}
+			if(letter === ' ') {
+				if(aboutText[i - 1] === ' ')
+				letter = '&nbsp;';
+			}
+			if(letter === '$') {
+				active = false;
+				typingSound.pause();
+				return;
+			}
+			aboutElement.innerHTML += letter;
+			setTimeout(() => {
+				if (i < aboutText.length) {
+					append();
+					i++;
+				}
+			}, time);
+		}
+
+		setTimeout(() => {
+			append();
+		}, 1000);
+
+		function reset() {
+			aboutElement.innerHTML = '';
+			i = 0;
+			time = 5;
+			active = true;
+			typingSound.pause();
+			append();
+		}
+
+		document.addEventListener('click', () => {
+			next();
+		});
+		
+
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				next();
+			}
+		});
+
+		document.getElementById('me-wrapper').addEventListener('click', () => {
+			next();
+		});
+
+		function next() {
+			if(!active) {
+				time = 50;
+				active = true;
+				append();
+			}
+			else {
+				time = 0;
+			}
+		}
+
+		const music = new Audio('music.mp3');
+		music.volume = .25;
+		music.loop = true;
+
+		// on first interaction, start music
+		document.addEventListener('click', () => {
+			music.play();
+			document.removeEventListener('click', () => {});
+		});
 	});
 </script>
 
@@ -505,30 +680,38 @@ import Slider from "./Slider.svelte";
 			<h6>wobble_speed</h6>
 		</span>
 	</div>
-	<div style="width: 100vw; display: flex; justify-content: center;">
-		<h6 style="margin-top: 12px;">webgpu_mandelbulb_explorer</h6>
-	</div>
-	<h6 style="position: absolute; bottom: 0">
-		|<br>
-		|<br>
-		+--
-	</h6>
-	<h6 style="position: absolute; bottom: 0; right: 0; text-align: right;">
-		|<br>
-		|<br>
-		--+
-	</h6>
 	<h6 style="position: absolute; bottom: 0; width: 100vw; text-align: center; margin: 0; transform: translateY(-10px)">
 		- x -
 	</h6>
-	
 {:else}
-	<h6 style="color: black; justify-content: center; align-items: center; display: flex; height: 100vh">
+	<h6 style="color: black; justify-content: center; display: flex; position: absolute; bottom: 0; width: 100vw">
 		No GPU adapter found! Try updating chrome and enabling the experimental flag "#enable-unsafe-webgpu" under "chrome://flags.
 	</h6>
 {/if}
+<h6 class="black" style="position: absolute; bottom: 0">
+	|<br>
+	|<br>
+	+--
+</h6>
+<h6 class="black" style="position: absolute; bottom: 0; right: 0; text-align: right;">
+	|<br>
+	|<br>
+	--+
+</h6>
+<div style="width: 100vw; display: flex; justify-content: center;">
+	<h6 id="about-konrad" style="margin-top: 12px; height: fit-content;" class="black bg-inverse">about_konrad</h6>
+</div>
 <canvas bind:this="{canvas}">
 </canvas>
+
+<div style="position: absolute; width: 100vw; height: 100vh; top: 0; left: 0; display: flex; justify-content: center; align-items: center;">
+	<div id="me-wrapper" style="width: 60%; height: 60%;">
+		<h5 id="about-text">
+
+		</h5>
+	</div>
+</div>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -551,6 +734,12 @@ import Slider from "./Slider.svelte";
 		margin-top: 12px;
 		color: white;
 		mix-blend-mode: difference;
+	}
+	h5 {
+		font-family: 'Press Start 2P', cursive;
+		color: black;
+		mix-blend-mode: difference;
+		line-height: 30px;
 	}
 	span {
 		margin-top: -10px;
@@ -575,5 +764,8 @@ import Slider from "./Slider.svelte";
 	}
 	.right span {
 		flex-direction: row-reverse;
+	}
+	.black {
+		color: black;
 	}
 </style>

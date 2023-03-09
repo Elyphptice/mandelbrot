@@ -1,23 +1,23 @@
 // Vertex shader
 
 struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>;
-    @location(0) position: vec2<f32>;
+    @builtin(position) clip_position: vec4<f32>,
+    @location(0) position: vec2<f32>,
 };
 
 
 struct InputData {
-    projection: mat4x4<f32>;
-    inverse_projection: mat4x4<f32>;
-    inverse_view: mat4x4<f32>;
-    camera_position: vec3<f32>;
-    time: f32;
-    color: f32;
-    noise: f32;
-    chromatic_aberration: f32;
-    iterations: f32;
-    power: f32;
-    normals: f32;
+    projection: mat4x4<f32>,
+    inverse_projection: mat4x4<f32>,
+    inverse_view: mat4x4<f32>,
+    camera_position: vec3<f32>,
+    time: f32,
+    color: f32,
+    noise: f32,
+    chromatic_aberration: f32,
+    iterations: f32,
+    power: f32,
+    normals: f32,
 };
 
 @binding(0) @group(0) var postSampler: sampler;

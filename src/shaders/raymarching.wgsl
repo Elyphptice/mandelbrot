@@ -1,56 +1,56 @@
 // Vertex shader
 
 struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>;
-    @location(0) position: vec3<f32>;
-    @location(1) ray: vec3<f32>;
-    @location(2) screen_coordinates: vec2<f32>;
+    @builtin(position) clip_position: vec4<f32>,
+    @location(0) position: vec3<f32>,
+    @location(1) ray: vec3<f32>,
+    @location(2) screen_coordinates: vec2<f32>
 };
 
 struct InputData {
-    projection: mat4x4<f32>;
-    inverse_projection: mat4x4<f32>;
-    inverse_view: mat4x4<f32>;
-    camera_position: vec3<f32>;
-    time: f32;
-    color: f32;
-    noise: f32;
-    chromatic_aberration: f32;
-    iterations: f32;
-    power: f32;
-    normals: f32;
-    randomness: f32;
-    wobble_speed: f32;
-    seed: f32;
-    color1: vec4<f32>;
-    color2: vec4<f32>;
-    color3: vec4<f32>;
+    projection: mat4x4<f32>,
+    inverse_projection: mat4x4<f32>,
+    inverse_view: mat4x4<f32>,
+    camera_position: vec3<f32>,
+    time: f32,
+    color: f32,
+    noise: f32,
+    chromatic_aberration: f32,
+    iterations: f32,
+    power: f32,
+    normals: f32,
+    randomness: f32,
+    wobble_speed: f32,
+    seed: f32,
+    color1: vec4<f32>,
+    color2: vec4<f32>,
+    color3: vec4<f32>,
 };
 
 @group(0) @binding(0)
 var<uniform> input_data: InputData;
 
 
-fn signed_distance_to_sphere(point: vec3<f32>, radius: f32) -> f32 {
-    return length(point) - radius;
+fn signed_distance_to_sphere(pos: vec3<f32>, radius: f32) -> f32 {
+    return length(pos) - radius;
 }
 
-fn signed_distance_to_cube(point: vec3<f32>, size: f32) -> f32 {
-    let q = abs(point) - size;
+fn signed_distance_to_cube(pos: vec3<f32>, size: f32) -> f32 {
+    let q = abs(pos) - size;
     return length(max(q, vec3<f32>(0.0))) + min(max(q.x ,max(q.y, q.z)), 0.0);
 }
 
 struct PolarSphere {
-    q: f32;
-    f: f32;
-    t: f32;
+    q: f32,
+    f: f32,
+    t: f32,
 }
 
-fn to_polar_sphere(point: vec3<f32>) -> PolarSphere {
+fn to_polar_sphere(pos: vec3<f32>) -> PolarSphere {
     var sphere = PolarSphere();
-    sphere.q = length(point);
-    sphere.f = atan2(point.y, point.x);
-    sphere.t = acos(point.z / sphere.q);
+    sphere.q = length(pos);
+    sphere.f = atan2(pos.y, pos.x);
+    sphere.t = acos(pos.z / sphere.q);
     return sphere;
 }
 
@@ -70,9 +70,9 @@ fn from_polar_sphere(sphere: PolarSphere) -> vec3<f32> {
     );
 }
 
-fn signed_distance_to_sierpinsky(point: vec3<f32>, iterations: u32, scale: f32) -> f32
+fn signed_distance_to_sierpinsky(pos: vec3<f32>, iterations: u32, scale: f32) -> f32
 {
-    var z = point;
+    var z = pos;
     
 	let a1 = vec3<f32>(1.0,1.0,1.0);
 	let a2 = vec3<f32>(-1.0,-1.0,1.0);
@@ -94,14 +94,14 @@ fn signed_distance_to_sierpinsky(point: vec3<f32>, iterations: u32, scale: f32) 
 	return length(z) * pow(scale, f32(-n));
 }
 
-fn signed_distance_to_ocahedron(point: vec3<f32>, size: f32) -> f32
+fn signed_distance_to_ocahedron(pos: vec3<f32>, size: f32) -> f32
 {
-    let p = abs(point);
+    let p = abs(pos);
     return (p.x+p.y+p.z-size)*0.57735027;
 }
 
-fn signed_distance_to_mandelbulb(point: vec3<f32>, iterations: u32, power: f32) -> f32 {
-	var z = point;
+fn signed_distance_to_mandelbulb(pos: vec3<f32>, iterations: u32, power: f32) -> f32 {
+	var z = pos;
 	var q = 0.0;
 	var dr = 1.0;
 
@@ -119,7 +119,7 @@ fn signed_distance_to_mandelbulb(point: vec3<f32>, iterations: u32, power: f32) 
 
         let pow_cartesian = from_polar_sphere(polar_pow);
 
-        z = pow_cartesian + point;
+        z = pow_cartesian + pos;
 	}
 	return 0.5*log(q)*q/dr;
 }
@@ -191,10 +191,10 @@ fn perlin_noise(coord: vec3<f32>) -> f32{
 
 // fn noise
 
-fn map(point: vec3<f32>) -> f32 {
-    var repeat = cos(point);
+fn map(pos: vec3<f32>) -> f32 {
+    var repeat = cos(pos);
     if(input_data.randomness != 0.0){
-        let r = perlin_noise(point * input_data.randomness + input_data.seed + input_data.time * input_data.wobble_speed) * 2.0 - 1.0;
+        let r = perlin_noise(pos * input_data.randomness + input_data.seed + input_data.time * input_data.wobble_speed) * 2.0 - 1.0;
         repeat = repeat + r;
     }
     let d3 = signed_distance_to_mandelbulb(repeat, u32(input_data.iterations), input_data.power);
@@ -208,10 +208,10 @@ fn map(point: vec3<f32>) -> f32 {
     // );
 }
 
-fn colored_map(point: vec3<f32>) -> vec2<f32> {
-    let otherPoint = point + vec3<f32>(.5 * sin(input_data.time), 0.0, 0.0);
-    let d1 = signed_distance_to_sphere(point, 0.2);
-    let d2 = signed_distance_to_cube(otherPoint, 0.1);
+fn colored_map(pos: vec3<f32>) -> vec2<f32> {
+    let otherpos = pos + vec3<f32>(.5 * sin(input_data.time), 0.0, 0.0);
+    let d1 = signed_distance_to_sphere(pos, 0.2);
+    let d2 = signed_distance_to_cube(otherpos, 0.1);
 
     let m = smooth_min(
         d1,
@@ -227,13 +227,13 @@ fn smooth_min(a: f32, b: f32, smoothing: f32) -> f32 {
     return min(a, b) - h * h * h * smoothing / 6.0;
 }
 
-fn normal(point: vec3<f32>) -> vec3<f32> {
+fn normal(pos: vec3<f32>) -> vec3<f32> {
     let eps = 0.001;
     
     let normal = vec3<f32>(
-        map(point + vec3<f32>(eps, 0.0, 0.0)) - map(point + vec3<f32>(-eps, 0.0, 0.0)),
-        map(point + vec3<f32>(0.0, eps, 0.0)) - map(point + vec3<f32>(0.0, -eps, 0.0)),
-        map(point + vec3<f32>(0.0, 0.0, eps)) - map(point + vec3<f32>(0.0, 0.0, -eps))
+        map(pos + vec3<f32>(eps, 0.0, 0.0)) - map(pos + vec3<f32>(-eps, 0.0, 0.0)),
+        map(pos + vec3<f32>(0.0, eps, 0.0)) - map(pos + vec3<f32>(0.0, -eps, 0.0)),
+        map(pos + vec3<f32>(0.0, 0.0, eps)) - map(pos + vec3<f32>(0.0, 0.0, -eps))
     );
     return normalize(normal);
 }
