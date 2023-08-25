@@ -114,7 +114,6 @@
 		if (!adapter) exit();
 
 		webgpuCapable = true;
-		document.getElementById("about-text").style.color = "white";
 		document
 			.querySelectorAll("h6")
 			.forEach((e) => e.classList.remove("black"));
@@ -561,176 +560,6 @@
 	onMount(() => {
 		init();
 		inputData = new InputData();
-
-		let aboutElement = document.getElementById("about-text");
-
-		let aboutText = `
-		> New session started at ${new Date().toLocaleString()}
-		> Press enter or click to continue#
-		>#
-		let me = new Konrad();#
-		echo me.name;
-		> Konrad Hapke#
-		clear# %
-		echo me.age;
-		> 19
-		echo me.location;
-		> Vienna, Austria
-		clear# %
-		echo me.ask("What's up with the mandelbulb?");#
-		> I'm glad you asked!
-		> It's here, because it is just as intricate as I am.#
-		> #
-		> #
-		> Sorry :/#
-		clear# %
-		echo me.hobbies;
-		> Bouldering#
-		> Music#
-		> 3D-Art#
-		> Programming, hehe#
-		clear# %
-		echo me.things_i_love;
-		> The Programming Language Rust#
-		> Everything Open Source#
-		> Nature#
-		> My family#
-		> Everyone Codes#
-		clear# %
-		echo me.things_i_hate;
-		> People who don't use Linux (kidding)
-		> People who don't use Rust (also kidding)
-		> Closed Source Software
-		> Graphical User Interfaces (not kidding)
-		clear# %
-		echo me.ask("Why do you love Everything Codes?");
-		> They offer the best zivi job, objectively.#
-		> It's about programming.#
-		> You offered a CS50 course, and that's how I got into coding.#
-		> My friend Sami will also work there this summer.#
-		clear# %
-		echo me.ask("How would you be helpful to Everything Codes?");
-		> I love explaining code, so maybe I could help in the programs.#
-		> I could create some 3D-Art... if that would be helpful :)#
-		> I could help with the website.#
-		> And pretty much anything else you need.#
-		clear# %
-		echo me.ask("What did you do before Everything Codes?");
-		> I was a student at the HTL Spengergasse.#
-		> There I made about 5 feature-complete games in Unity.#
-		> Made a daily Blender-Render for 168 days.#
-		> I had an internship at Loytec, where I learned connecting Unix machines via TCP to automate buildings.#
-		> SEO for some sites.#
-		> An online Game for the Museum of Applied Arts.#
-		clear# %
-		> echo me.skills;
-		> Unity and CSharp#
-		> Rust#
-		> Everything web#
-		> Blender#
-		> Collaborating, since a lot of my projects were group projects#
-		> clear# %
-		echo "Alight, enough about Konrad."#
-		ps -e | grep konrad#
-		> PID  TTY      TIME     CMD
-		> 3213 ttys031  00:02:03 konrad.rs
-		kill 3213#
-		> Konrad has been terminated.#
-		clear# %
-		$
-		`;
-
-		let time = 5;
-		let i = 0;
-		let active = true;
-		const typingSound = new Audio("typing.mp3");
-		typingSound.loop = true;
-
-		function append() {
-			typingSound.play();
-			let letter = aboutText[i];
-			if (letter === "#") {
-				active = false;
-				typingSound.pause();
-				i++;
-				aboutElement.innerHTML += "<br>";
-				return;
-			}
-			if (letter === "%") {
-				aboutElement.innerHTML = "";
-				i++;
-				letter = "";
-			}
-			if (letter === ">") {
-				time = 5;
-			}
-			if (letter === "\n") {
-				time = 50;
-				letter = "<br>";
-			}
-			if (letter === " ") {
-				if (aboutText[i - 1] === " ") letter = "&nbsp;";
-			}
-			if (letter === "$") {
-				active = false;
-				typingSound.pause();
-				return;
-			}
-			aboutElement.innerHTML += letter;
-			setTimeout(() => {
-				if (i < aboutText.length) {
-					append();
-					i++;
-				}
-			}, time);
-		}
-
-		setTimeout(() => {
-			append();
-		}, 1000);
-
-		function reset() {
-			aboutElement.innerHTML = "";
-			i = 0;
-			time = 5;
-			active = true;
-			typingSound.pause();
-			append();
-		}
-
-		document.addEventListener("click", () => {
-			next();
-		});
-
-		document.addEventListener("keydown", (e) => {
-			if (e.key === "Enter") {
-				next();
-			}
-		});
-
-		document.getElementById("me-wrapper").addEventListener("click", () => {
-			next();
-		});
-
-		function next() {
-			if (!active) {
-				time = 50;
-				active = true;
-				append();
-			} else {
-				time = 0;
-			}
-		}
-
-		const music = new Audio("music.mp3");
-		music.volume = 0.25;
-		music.loop = true;
-
-		// on first interaction, start music
-		document.addEventListener("click", () => {
-			music.play();
-			document.removeEventListener("click", () => {});
-		});
 	});
 </script>
 
@@ -835,23 +664,11 @@
 	--+
 </h6>
 <div style="width: 100vw; display: flex; justify-content: center;">
-	<h6
-		id="about-konrad"
-		style="margin-top: 12px; height: fit-content;"
-		class="black bg-inverse"
-	>
-		about_konrad
+	<h6 style="margin-top: 12px; height: fit-content;" class="black bg-inverse">
+		mandelbulb_explorer
 	</h6>
 </div>
 <canvas height="2000" width="2000" bind:this={canvas} />
-
-<div
-	style="position: absolute; width: 100svw; height: 100.01svh; top: 0; left: 0; display: flex; justify-content: center; align-items: center;"
->
-	<div id="me-wrapper" style="width: 60%; height: 60%;">
-		<h5 id="about-text" />
-	</div>
-</div>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -894,11 +711,11 @@
 	}
 	canvas {
 		width: 100svw;
-		height: 100.01svh;
+		height: 100svh;
 	}
 	div {
 		pointer-events: none;
-		height: 100.01svh;
+		height: 100svh;
 		position: absolute;
 	}
 	div > :nth-child(1) {
