@@ -24,7 +24,7 @@ struct InputData {
 @binding(1) @group(0) var postTexture: texture_2d<f32>;
 @binding(2) @group(0) var<uniform> input_data: InputData;
 
-@stage(vertex)
+@vertex
 fn vs_main(
     @builtin(vertex_index) in_vertex_index: u32,
 ) -> VertexOutput {
@@ -75,8 +75,8 @@ fn chromatic_aberration(pos: vec2<f32>, amount: f32, over_distort: f32) -> vec4<
     );
 }
 
-fn rand(co: vec2<f32>) -> f32{
-  return fract(sin(dot(co.xy ,vec2<f32>(12.9898,78.233))) * 43758.5453);
+fn rand(co: vec2<f32>) -> f32 {
+    return fract(sin(dot(co.xy, vec2<f32>(12.9898, 78.233))) * 43758.5453);
 }
 
 fn noise(pos: vec2<f32>, amount: f32) -> f32 {
@@ -85,9 +85,9 @@ fn noise(pos: vec2<f32>, amount: f32) -> f32 {
 }
 
 // Fragment shader
-@stage(fragment)
+@fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    var image = chromatic_aberration(in.position,  input_data.chromatic_aberration * 0.1, input_data.chromatic_aberration * .03);
+    var image = chromatic_aberration(in.position, input_data.chromatic_aberration * 0.1, input_data.chromatic_aberration * .03);
     image = image + noise(in.position, input_data.noise);
     return image;
 }
